@@ -358,6 +358,14 @@ class GenomeReport {
             $ret['logmtime'] = filemtime ($ret['logfilename']);
             $ret['log'] .= "\n\nLog file ends: ".date('r',$ret['logmtime']);
         }
+        $ret['result_url'] =
+            'http://' . $_SERVER['HTTP_HOST'] .
+            '/genomes?display_genome_id=' . $this->genomeID;
+        if ($_REQUEST['access_token']) {
+            $ret['report_url'] .=
+                '&access_token=' .
+                urlencode($_REQUEST['access_token']);
+        }
         return $ret;
     }
 
