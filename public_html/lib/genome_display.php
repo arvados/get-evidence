@@ -362,7 +362,7 @@ class GenomeReport {
             'http://' . $_SERVER['HTTP_HOST'] .
             '/genomes?display_genome_id=' . $this->genomeID;
         if ($_REQUEST['access_token']) {
-            $ret['report_url'] .=
+            $ret['result_url'] .=
                 '&access_token=' .
                 urlencode($_REQUEST['access_token']);
         }
