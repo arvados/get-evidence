@@ -314,7 +314,7 @@ def genome_analyzer(genotype_file, server=None, options=None):
     progtrack = ProgressTracker(sys.stderr, [22, 99], expected=chrlist, 
                                 metadata=genome_data)
 
-    if not options or not options.chromosome:
+    if not options or not options.no_metadata:
 
         # Record chromosomes seen and genome coverage.
         gff_in_gen = get_metadata.genome_metadata(gff_in_gen,
@@ -460,6 +460,9 @@ def main():
     parser.add_option("-M", "--metadata-only", dest="metadata_only", action="store_true",
                       help="do not call nsSNPs, just produce statistics",
                       metavar="METADATA_ONLY")
+    parser.add_option("--no-metadata", dest="no_metadata", action="store_true",
+                      help="do not produce statistics",
+                      metavar="NO_METADATA")
     parser.add_option("--sort-buffer-size", dest="sort_buffer_size",
                       help="control --buffer-size option to sort(1)",
                       metavar="SORT_BUFFER_SIZE")
