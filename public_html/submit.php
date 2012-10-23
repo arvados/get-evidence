@@ -53,19 +53,23 @@ if ($confirm_shasum != $shasum) {
 }
 
 if (isset($_REQUEST['human_id']) &&
-    substr($_REQUEST['human_id'],0,2) == $api_key) {
+    (substr($_REQUEST['human_id'],0,2) == $api_key
+     || $_REQUEST['human_id'] == '')) {
     // If your api_key is "hu", you are in charge of global human IDs
     // starting with "hu".  Ignore attempts to assign other human IDs.
-    theDB()->query ("INSERT IGNORE INTO genomes SET global_human_id=?",
-                    array ($_REQUEST['human_id']));
+    if ($_REQUEST['human_id'] != '') {
+        theDB()->query ("INSERT IGNORE INTO genomes SET global_human_id=?",
+                        array ($_REQUEST['human_id']));
+        if (isset($_REQUEST['human_name'])) {
+            theDB()->query ("UPDATE genomes SET name=? WHERE global_human_id=?",
+                            array ($_REQUEST['human_name'],
+                                   $_REQUEST['human_id']));
+        }
+    }
     theDB()->query ("UPDATE private_genomes SET
                      global_human_id=? WHERE oid=? AND shasum=?",
                     array ($_REQUEST['human_id'],
                            $api_key, $shasum));
-    if (@$_REQUEST['human_name']) {
-        theDB()->query ("UPDATE genomes SET name=? WHERE global_human_id=?",
-                        array ($_REQUEST['human_name'], $_REQUEST['human_id']));
-    }
 }
 
 $result_url = 'http://' . $_SERVER['HTTP_HOST'] . '/genomes?display_genome_id=' . $shasum;
