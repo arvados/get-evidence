@@ -284,6 +284,7 @@ foreach (theDb()->getAll ("SELECT * FROM variant_population_frequency WHERE vari
 	continue;
     $allele = $frow['genotype'];
     $chr = $frow["chr"];
+    $pos = $frow["start"];
     $num = $frow["num"];
     $denom = $frow["denom"];
     $f = sprintf ("%.1f%%", 100 * $num / $denom);
