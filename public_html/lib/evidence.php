@@ -102,9 +102,12 @@ function evidence_create_tables ()
   theDb()->query ("ALTER TABLE variant_occurs
   ADD chr CHAR(6),
   ADD chr_pos INT UNSIGNED,
-  ADD allele CHAR(1),
+  ADD allele VARCHAR(32),
   ADD INDEX chr_pos_allele (chr,chr_pos,allele)
   ");
+  $show = theDb()->getRow("SHOW CREATE TABLE variant_occurs");
+  if (!preg_match('{`allele` varchar\(32\)}i', $show['Create Table']))
+    theDb()->query ("ALTER TABLE variant_occurs CHANGE allele allele VARCHAR(32)");
 
   theDb()->query ("CREATE TABLE IF NOT EXISTS variant_locations (
   chr CHAR(6) NOT NULL,

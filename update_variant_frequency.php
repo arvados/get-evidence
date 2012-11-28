@@ -59,10 +59,16 @@ print theDb()->affectedRows();
 print "\n";
 
 
-print "Creating variant_chr_pos from variant_locations...";
-theDb()->query ("CREATE TEMPORARY TABLE variant_chr_pos AS SELECT DISTINCT variant_id,chr,chr_pos,allele FROM variant_locations WHERE variant_id IS NOT NULL");
-print theDb()->affectedRows();
-print "\n";
+theDb()->query ("CREATE TEMPORARY TABLE variant_chr_pos (
+  variant_id BIGINT UNSIGNED,
+  chr CHAR(6) NOT NULL,
+  chr_pos INT UNSIGNED NOT NULL,
+  allele VARCHAR(32))");
+
+// print "Creating variant_chr_pos from variant_locations...";
+// theDb()->query ("INSERT INTO variant_chr_pos SELECT DISTINCT variant_id,chr,chr_pos,allele FROM variant_locations WHERE variant_id IS NOT NULL");
+// print theDb()->affectedRows();
+// print "\n";
 
 
 print "Adding index...";

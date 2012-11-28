@@ -17,6 +17,7 @@ if ($_SERVER["argc"] == 2)
     $want_genome = $_SERVER["argv"][1];
 
 genomes_create_tables ();
+evidence_create_tables ();
 openid_login_as_robot ("Genome Importing Robot");
 
 theDb()->query ("CREATE TEMPORARY TABLE import_genomes_tmp (
@@ -24,8 +25,7 @@ theDb()->query ("CREATE TEMPORARY TABLE import_genomes_tmp (
  genome_id BIGINT UNSIGNED NOT NULL,
  chr CHAR(6) NOT NULL,
  chr_pos INT UNSIGNED NOT NULL,
- trait_allele CHAR(1),
- taf FLOAT,
+ nonref_seq VARCHAR(32),
  rsid BIGINT UNSIGNED,
  dataset_id VARCHAR(16) NOT NULL,
  zygosity ENUM('heterozygous','homozygous') NOT NULL DEFAULT 'heterozygous',
@@ -39,7 +39,7 @@ theDb()->query ("CREATE TEMPORARY TABLE imported_datasets (
 // Dump current list of variants into import_genomes_tmp table
 
 $and = "";
-$params = array ($pgp_data_user, $public_data_user);
+$params = array ($pgp_data_user, $public_data_user, 'hu');
 if (isset ($want_genome)) {
     if (strlen($want_genome) == 40)
 	$and = "AND shasum=?";
@@ -47,14 +47,13 @@ if (isset ($want_genome)) {
 	$and = "AND private_genome_id=?";
     $params[] = $want_genome;
 }
-$sql = "SELECT * FROM private_genomes WHERE oid IN (?,?) $and";
+$sql = "SELECT * FROM private_genomes WHERE oid IN (?,?,?) $and";
 $public_genomes = theDb()->getAll ($sql, $params);
 
 foreach ($public_genomes as $g) {
     $datadir = "$gBackendBaseDir/upload/{$g['shasum']}-out";
     print "Importing genome {$g['private_genome_id']} sha {$g['shasum']} nick \"{$g['nickname']}\" uploaded by {$g['oid']}\n";
 
-    // FIXME: add global_human_id column to the private_genomes table
     if (isset ($g['global_human_id']) && 0 < strlen($g['global_human_id']))
 	$global_human_id = $g['global_human_id'];
     else {
@@ -64,7 +63,7 @@ foreach ($public_genomes as $g) {
 
     $fh = fopen ("$datadir/get-evidence.json", "r");
     if (!$fh) { print "open($datadir/get-evidence.json) failed.\n"; continue; }
-    if (file_exists ("$datadir/lock")) { print "Skipping because backend is still processing.\n"; continue; }
+    if (is_locked($datadir)) { print "Skipping because backend is still processing.\n"; continue; }
 
     $genome_id = evidence_get_genome_id ($global_human_id);
     $dataset_id = substr($g['shasum'], 0, 16);
@@ -133,30 +132,29 @@ foreach ($public_genomes as $g) {
 						     true);
 	    }
 
-	    $taf = null;
-	    if (isset($jvariant["num"]) && $jvariant["denom"]>0)
-		// FIXME: taf is no longer in JSON so downstream needs to be updated before it can be used
-		$taf = $jvariant["num"] / $jvariant["denom"];
-
 	    $allele = $jvariant["genotype"];
-	    $zygosity = preg_match ('{^[ACGT]$}', $allele) ? "homozygous" : "heterozygous";
-	    $trait_allele = preg_replace ('{[^ACGT]|'.$jvariant["ref_allele"].'}', '', $jvariant["genotype"]);
-	    if (strlen($trait_allele) > 1) {
-		$trait_allele = bp_flatten ($trait_allele); // compound het
-		$taf = null;
-	    }
+	    $ref_allele = $jvariant["ref_allele"];
 
-	    $ok = theDb()->query ("INSERT IGNORE INTO import_genomes_tmp SET variant_id=?, genome_id=?, chr=?, chr_pos=?, trait_allele=?, taf=?, rsid=?, dataset_id=?, zygosity=?",
-				  array ($variant_id,
-					 $genome_id,
-					 $jvariant["chromosome"],
-					 $jvariant["coordinates"],
-					 $trait_allele,
-					 $taf,
-					 $rsid,
-					 $dataset_id,
-					 $zygosity));
-	    if (theDb()->isError($ok)) die ($line."\n".$ok->getMessage()."\n");
+	    if (preg_match ('{^[-ACGT]+$}', $allele) ||
+		(preg_match ('{^([-ACGT]+)/([-ACGT]+)$}', $allele, $regs) && $regs[1] == $regs[2]))
+		$zygosity = 'homozygous';
+	    else
+		$zygosity = 'heterozygous';
+	    $nonref_seqs = array_diff(split('/', $allele), array($ref_allele));
+	    sort($nonref_seqs);
+
+	    foreach ($nonref_seqs as $nonref_seq) {
+		$ok = theDb()->query ("INSERT IGNORE INTO import_genomes_tmp SET variant_id=?, genome_id=?, chr=?, chr_pos=?, nonref_seq=?, rsid=?, dataset_id=?, zygosity=?",
+				      array ($variant_id,
+					     $genome_id,
+					     $jvariant["chromosome"],
+					     $jvariant["coordinates"],
+					     $nonref_seq,
+					     $rsid,
+					     $dataset_id,
+					     $zygosity));
+		if (theDb()->isError($ok)) die ($line."\n".$ok->getMessage()."\n");
+	    }
 	}
     }
     print "\n$count_existing_variants existing and $count_new_variants new variants.\n";
@@ -167,7 +165,7 @@ foreach ($public_genomes as $g) {
     else
 	$fh = fopen ($nsfile = "$datadir/ns.gff", "r");
     if (!$fh) { print "open($nsfile) failed.\n"; continue; }
-    if (file_exists ("$datadir/lock")) { print "Skipping because backend is still processing.\n"; continue; }
+    if (is_locked($datadir)) { print "Skipping because backend is still processing.\n"; continue; }
     print "\nReading $nsfile\n";
     $ops = 0;
     $count_existing_variants = 0;
@@ -208,18 +206,20 @@ foreach ($public_genomes as $g) {
 	    $allele = $regs[1];
 	else continue;
 
-	if (preg_match ('{ref_allele ([ACGT])}', $gff[8], $regs))
+	if (preg_match ('{ref_allele ([ACGT]+)}', $gff[8], $regs))
 	    $ref_allele = $regs[1];
 	else continue;
 
 	$chromosome = $gff[0];
 	$position = $gff[3];
 
-	$zygosity = preg_match ('{^[ACGT]$}', $allele) ? "homozygous" : "heterozygous";
-	$trait_allele = preg_replace ('{[^ACGT]|'.$ref_allele.'}', '', $allele);
-	if (strlen($trait_allele) > 1) {
-	    $trait_allele = bp_flatten ($trait_allele); // compound het
-	}
+	if (preg_match ('{^[-ACGT]+$}', $allele) ||
+	    (preg_match ('{^([-ACGT]+)/([-ACGT]+)$}', $allele, $regs) && $regs[1] == $regs[2]))
+	    $zygosity = 'homozygous';
+	else
+	    $zygosity = 'heterozygous';
+	$nonref_seqs = array_diff(split('/', $allele), array($ref_allele));
+	sort($nonref_seqs);
 
 	foreach ($variant_names as $variant_name) {
 	    $variant_id = evidence_get_variant_id ($variant_name);
@@ -240,17 +240,18 @@ foreach ($public_genomes as $g) {
 						     0, 0, 0,
 						     true);
 	    }
-	    $ok = theDb()->query ("INSERT IGNORE INTO import_genomes_tmp SET variant_id=?, genome_id=?, chr=?, chr_pos=?, trait_allele=?, taf=?, rsid=?, dataset_id=?, zygosity=?",
-				  array ($variant_id,
-					 $genome_id,
-					 $chromosome,
-					 $position,
-					 $trait_allele,
-					 $taf,
-					 $rsid,
-					 $dataset_id,
-					 $zygosity));
-	    if (theDb()->isError($ok)) die ($line."\n".$ok->getMessage());
+	    foreach ($nonref_seqs as $nonref_seq) {
+		$ok = theDb()->query ("INSERT IGNORE INTO import_genomes_tmp SET variant_id=?, genome_id=?, chr=?, chr_pos=?, nonref_seq=?, rsid=?, dataset_id=?, zygosity=?",
+				      array ($variant_id,
+					     $genome_id,
+					     $chromosome,
+					     $position,
+					     $nonref_seq,
+					     $rsid,
+					     $dataset_id,
+					     $zygosity));
+		if (theDb()->isError($ok)) die ($line."\n".$ok->getMessage());
+	    }
 	}
     }
     print "\n$count_existing_variants existing and $count_new_variants new variants.\n";
@@ -261,7 +262,7 @@ foreach ($public_genomes as $g) {
 }
 
 print "Adding {dataset,variant} associations to variant_occurs table...";
-theDb()->query ("REPLACE INTO variant_occurs (variant_id, rsid, dataset_id, zygosity, chr, chr_pos, allele) SELECT variant_id, rsid, dataset_id, zygosity, chr, chr_pos, trait_allele FROM import_genomes_tmp");
+theDb()->query ("REPLACE INTO variant_occurs (variant_id, rsid, dataset_id, zygosity, chr, chr_pos, allele) SELECT variant_id, rsid, dataset_id, zygosity, chr, chr_pos, nonref_seq FROM import_genomes_tmp");
 print theDb()->affectedRows();
 print "\n";
 
@@ -375,4 +376,11 @@ WHERE edit_id IN (SELECT previous_edit_id FROM edits WHERE edit_oid=? AND edit_t
 ", array (getCurrentUser("oid"), $timestamp));
   print theDb()->affectedRows();
   print "\n";
+}
+
+function is_locked($datadir) {
+    $ok = shell_exec('flock --wait 1 --exclusive --nonblock '
+		     .escapeshellarg("$datadir/lock")
+		     .' echo -n ok');
+    return ($ok != 'ok');
 }
