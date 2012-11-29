@@ -39,7 +39,7 @@ theDb()->query ("CREATE TEMPORARY TABLE imported_datasets (
 // Dump current list of variants into import_genomes_tmp table
 
 $and = "";
-$params = array ($pgp_data_user, $public_data_user, 'hu');
+$params = array ($pgp_data_user, $public_data_user);
 if (isset ($want_genome)) {
     if (strlen($want_genome) == 40)
 	$and = "AND shasum=?";
@@ -47,7 +47,7 @@ if (isset ($want_genome)) {
 	$and = "AND private_genome_id=?";
     $params[] = $want_genome;
 }
-$sql = "SELECT * FROM private_genomes WHERE oid IN (?,?,?) $and";
+$sql = "SELECT * FROM private_genomes WHERE (oid IN (?,?) or (oid like '__' and is_public = 1)) $and";
 $public_genomes = theDb()->getAll ($sql, $params);
 
 foreach ($public_genomes as $g) {

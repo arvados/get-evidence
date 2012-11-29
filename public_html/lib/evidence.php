@@ -690,9 +690,11 @@ function evidence_get_report ($snap, $variant_id)
 				AND variant_occurs.dataset_id IN (SELECT dataset_id FROM datasets WHERE genome_id = $table.genome_id)
 			LEFT JOIN datasets
 				ON datasets.dataset_id = variant_occurs.dataset_id
+                        LEFT JOIN private_genomes pg
+                                ON datasets.dataset_id = substr(pg.shasum,1,16)
 			LEFT JOIN variant_frequency vf
 				ON vf.variant_id=variants.variant_id
-			WHERE variants.variant_id=?
+			WHERE variants.variant_id=? and not (pg.oid like '__' and pg.is_public = 0)
 				$and_max_edit_id
 			GROUP BY
 				$table.genome_id,
