@@ -701,7 +701,8 @@ function evidence_get_report ($snap, $variant_id)
 				$table.article_pmid,
 				$table.disease_id
 			ORDER BY
-				$table.genome_id,
+                                genomes.global_human_id not like 'hu%',
+                                genomes.global_human_id,
 				$table.article_pmid,
 				diseases.disease_name,
 				$table.disease_id,
@@ -1311,10 +1312,8 @@ class evidence_row_renderer {
 
 	  $html .= "<A name=\"g".$row["genome_id"]."\"></A>\n";
 
-	  // Pick the most human-readable name for this genome/person
-	  if (!($name = $row["name"]))
-	    if (!($name = $row["global_human_id"]))
-	      $name = "[" . $row["genome_id"] . "]";
+	  if (!($name = $row["global_human_id"]))
+            $name = "[#" . $row["genome_id"] . "]";
 	  $name = htmlspecialchars ($name);
 
 	  // Link to the full genome(s)
@@ -1324,10 +1323,10 @@ class evidence_row_renderer {
 	      $row["dataset_url"] = $tmp;
 	  }
 	  if ($row["dataset_count"] > 0)
-	    $name = "<A href=\"$row[dataset_url]\">$name</A>";
+	    $name .= " - <A href=\"$row[dataset_url]\">{$row['name']}</A>";
 	  if ($row["dataset_count"] > 1) {
 	    $more = $row["dataset_count"] - 1;
-	    $name .= " (";
+	    $name .= ", ";
 	    if ($row["dataset_url_2"]) {
 	      $name .= "<A href=\"$row[dataset_url_2]\">alternate</A>, ";
 	      --$more;
@@ -1338,7 +1337,6 @@ class evidence_row_renderer {
 	      $name .= "plus 1 other data set";
 	    else
 	      $name = ereg_replace (", $", "", $name);
-	    $name .= ")";
 	  }
 
 	  // Indicate the SNP that causes the variant

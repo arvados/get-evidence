@@ -74,7 +74,7 @@ foreach ($public_genomes as $g) {
 		    array ($g['nickname'], $genome_id));
     theDb()->query ("REPLACE INTO datasets SET dataset_id=?, genome_id=?, sex=?, dataset_url=?",
 		    array ($dataset_id, $genome_id, $sex,
-			   "/genomes?{$g['private_genome_id']}"));
+			   "/genomes?{$g['shasum']}"));
 
     $ops = 0;
     $count_existing_variants = 0;
