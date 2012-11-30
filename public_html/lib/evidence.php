@@ -668,6 +668,7 @@ function evidence_get_report ($snap, $variant_id)
 			vf.denom AS variant_f_denom,
 			vf.f AS variant_f,
 			COUNT(datasets.dataset_id) AS dataset_count,
+                        GROUP_CONCAT(datasets.dataset_id) AS dataset_ids,
 			MAX(zygosity) AS zygosity,
 			MAX(dataset_url) AS dataset_url,
 			MIN(dataset_url) AS dataset_url_2,
@@ -1322,22 +1323,23 @@ class evidence_row_renderer {
 	      $row["dataset_url_2"] = $row["dataset_url"];
 	      $row["dataset_url"] = $tmp;
 	  }
-	  if ($row["dataset_count"] > 0)
-	    $name .= " - <A href=\"$row[dataset_url]\">{$row['name']}</A>";
-	  if ($row["dataset_count"] > 1) {
-	    $more = $row["dataset_count"] - 1;
-	    $name .= ", ";
-	    if ($row["dataset_url_2"]) {
-	      $name .= "<A href=\"$row[dataset_url_2]\">alternate</A>, ";
-	      --$more;
-	    }
-	    if ($more > 1)
-	      $name .= "plus $more other data sets";
-	    else if ($more == 1)
-	      $name .= "plus 1 other data set";
-	    else
-	      $name = ereg_replace (", $", "", $name);
-	  }
+
+          global $pgp_data_user, $public_data_user;
+          if ($row["dataset_count"] == 0)
+            $dataset_rows = array();
+          else {
+            $ids = explode(',',$row["dataset_ids"]);
+            $dataset_rows = @theDb()->getAll('SELECT * FROM datasets d LEFT JOIN private_genomes pg ON d.dataset_id=substr(pg.shasum,1,16) AND (pg.is_public=1 OR pg.oid IN (?,?)) WHERE dataset_id IN ('. implode(',',array_fill(0,count($ids),'?')) .') AND pg.is_public IS NOT NULL', array_merge(array($pgp_data_user, $public_data_user), $ids));
+            @file_put_contents("/tmp/errors",print_r(array(explode(',',$row["dataset_ids"]),$dataset_rows),true),FILE_APPEND);
+          }
+
+          if (count($dataset_rows) > 0) {
+            $dataset_links = array();
+            foreach ($dataset_rows as $drow) {
+              $dataset_links[] = "<A href=\"$drow[dataset_url]\">{$drow['nickname']}</A>";
+            }
+            $name .= " - " . implode(", ", $dataset_links);
+          }
 
 	  // Indicate the SNP that causes the variant
 	  if ($row["chr"]) {

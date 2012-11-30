@@ -117,8 +117,8 @@ function list_uploaded_genomes($user_oid, $global_human_prefix=false) {
 	$condition = 'private_genomes.oid NOT IN (?,?) AND is_public=0';
 	$param = array ($pgp_data_user, $public_data_user);
     } elseif ($global_human_prefix !== false) {
-        $condition .= 'private_genomes.oid=? OR (is_public>0 AND global_human_id LIKE ?)';
-        $param = array ($user_oid, $global_human_prefix . "%");
+        $condition .= 'private_genomes.oid=? OR (is_public>0 AND substr(global_human_id,1,2)=private_genomes.oid)';
+        $param = array ($user_oid);
     } else {
 	$condition = 'private_genomes.oid=?';
 	$param = array ($user_oid);
@@ -126,12 +126,16 @@ function list_uploaded_genomes($user_oid, $global_human_prefix=false) {
     $db_query = theDb()->getAll ("SELECT private_genomes.*,email FROM private_genomes LEFT JOIN eb_users ON private_genomes.oid=eb_users.oid WHERE $condition ORDER BY private_genome_id", $param);
     if ($db_query) {
         $returned_text = "<TABLE class=\"report_table genome_list_table\">\n";
-        $returned_text .= "<TR><TH>Nickname</TH>";
+        $returned_text .= "<TR><TH>Nickname</TH><TH>Person ID</TH>";
         if($user['is_admin'])
             $returned_text .= "<TH>Uploaded by</TH>\n";
         $returned_text .= "<TH>Action</TH></TR>\n";
         foreach ($db_query as $result) {
-            $returned_text .= "<TR><TD>" . $result['nickname'] . "</TD><TD>";
+            $returned_text .= "<TR><TD>" . htmlspecialchars($result['nickname']) . "</TD><TD>";
+            $huid = htmlspecialchars($result['global_human_id']);
+            if (preg_match('{^hu}', $huid))
+                $huid = "<A href=\"https://my.personalgenomes.org/profile/$huid\">$huid</A>";
+            $returned_text .= $huid . "</TD><TD>";
             if ($user['is_admin'])
                 $returned_text .= $result['email'] . "</TD><TD>\n";
 	    $returned_text .= uploaded_genome_actions($result);

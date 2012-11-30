@@ -413,9 +413,9 @@ class GenomeReport {
      */
     public function header_data() {
         $db_cmd = "SELECT * FROM private_genomes 
-                   WHERE shasum=?";
+                   WHERE shasum=? ORDER BY is_public=0, private_genome_id DESC";
         $db_query = theDb()->getAll ($db_cmd, array($this->genomeID));
-        $head_data = array("Name" => false,
+        $head_data = array("Data source" => false,
                            "Public profile" => false);
 
         if ($db_query[0]['is_public']) {
@@ -431,12 +431,11 @@ class GenomeReport {
 
         if ($db_query[0]["nickname"]) {
             $realname = $db_query[0]["nickname"];
-            if (preg_match ('{^PGP\d+ \((.+?)\)}', $realname, $regs))
-                $realname = $regs[1];
-            $head_data["Name"] = htmlspecialchars($realname, ENT_QUOTES, 
-                                                  "UTF-8");
+            $head_data["Data source"] = htmlspecialchars($realname, ENT_QUOTES, 
+                                                         "UTF-8");
         }
         $global_human_id = $db_query[0]['global_human_id'];
+        $head_data["Person ID"] = $global_human_id;
         if (preg_match ('{^hu[A-F0-9]+$}', $global_human_id)) {
             $hu = false;
             // $hu = json_decode(file_get_contents("http://my.personalgenomes.org/api/get/$global_human_id"), true);
@@ -724,9 +723,9 @@ function genome_display($shasum, $oid, $is_admin=false, $options=array()) {
         return $returned_text;
     } 
     $header_data = $genome_report->header_data();
-    $qrealname = htmlspecialchars($header_data["Name"], ENT_QUOTES, "UTF-8");
-    $GLOBALS["gOut"]["title"] = $qrealname." - GET-Evidence variant report";
-    $returned_text = "<h1>Variant report for ".htmlspecialchars($qrealname,ENT_QUOTES,"UTF-8")."</h1><ul>";
+    $qtitle = htmlspecialchars($header_data["Person ID"] ? $header_data["Person ID"] : $header_data["Data source"], ENT_QUOTES, "UTF-8");
+    $GLOBALS["gOut"]["title"] = $qtitle." - GET-Evidence variant report";
+    $returned_text = "<h1>Variant report for $qtitle</h1><ul>";
     $header_data = $genome_report->header_data();
     foreach ($header_data as $k => $v)
         if ($v)
