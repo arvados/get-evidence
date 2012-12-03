@@ -695,7 +695,7 @@ function evidence_get_report ($snap, $variant_id)
                                 ON datasets.dataset_id = substr(pg.shasum,1,16)
 			LEFT JOIN variant_frequency vf
 				ON vf.variant_id=variants.variant_id
-			WHERE variants.variant_id=? and not (pg.oid like '__' and pg.is_public = 0)
+			WHERE variants.variant_id=? and not (datasets.dataset_id is not null and pg.oid like '__' and pg.is_public = 0)
 				$and_max_edit_id
 			GROUP BY
 				$table.genome_id,
