@@ -1330,7 +1330,6 @@ class evidence_row_renderer {
           else {
             $ids = explode(',',$row["dataset_ids"]);
             $dataset_rows = @theDb()->getAll('SELECT * FROM datasets d LEFT JOIN private_genomes pg ON d.dataset_id=substr(pg.shasum,1,16) AND (pg.is_public=1 OR pg.oid IN (?,?)) WHERE dataset_id IN ('. implode(',',array_fill(0,count($ids),'?')) .') AND pg.is_public IS NOT NULL', array_merge(array($pgp_data_user, $public_data_user), $ids));
-            @file_put_contents("/tmp/errors",print_r(array(explode(',',$row["dataset_ids"]),$dataset_rows),true),FILE_APPEND);
           }
 
           if (count($dataset_rows) > 0) {
