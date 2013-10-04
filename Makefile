@@ -50,7 +50,7 @@ public_html/js/tip_balloon.js:
 	perl -p -e 's:".*?":"/js/tip_balloon/": if m:^config\.\s*BalloonImgPath:' < wz_tooltip/tip_balloon.js > public_html/js/tip_balloon.js
 
 update_editors_summary:
-	./update_editors_summary.php
+	@./update_editors_summary.php
 
 import_omim: $(CACHEDIR)/OmimVarLocusIdSNP.bcp $(CACHEDIR)/morbidmap
 	./import_omim.php $(CACHEDIR)/OmimVarLocusIdSNP.bcp $(CACHEDIR)/morbidmap
@@ -65,32 +65,32 @@ TRAITOMATICHOST?=snp.oxf.freelogy.org
 PID:=$(shell echo $$PPID)
 
 dump_database:
-	./dump_database.php public_html/get-evidence.sql.gz
+	@./dump_database.php public_html/get-evidence.sql.gz
 
 data_local: latest_flat_tmp_local latest_flat latest_flat.gz vis_data
 data_http: latest_flat_tmp_http latest_flat latest_flat.gz vis_data
 latest_flat_tmp_local:
-	mkdir -p $(CACHEDIR)
-	(cd public_html && php ./download.php latest flat) > $(CACHEDIR)/latest-flat.tsv.tmp
-	(cd public_html && php ./download.php latest json) | gzip -c > $(CACHEDIR)/getev-latest.json.gz.tmp
+	@mkdir -p $(CACHEDIR)
+	@(cd public_html && php ./download.php latest flat) > $(CACHEDIR)/latest-flat.tsv.tmp
+	@(cd public_html && php ./download.php latest json) | gzip -c > $(CACHEDIR)/getev-latest.json.gz.tmp
 latest_flat_tmp_http:
 	mkdir -p $(CACHEDIR)
 	wget -O$(CACHEDIR)/latest-flat.tsv.tmp http://$(GETEVIDENCEHOST)/latest-flat.tsv
 	wget -O$(CACHEDIR)/getev-latest.json.gz.tmp http://$(GETEVIDENCEHOST)/getev-latest.json.gz
 latest_flat:
-	mv $(CACHEDIR)/latest-flat.tsv.tmp public_html/latest-flat.tsv
-	mv $(CACHEDIR)/getev-latest.json.gz.tmp public_html/getev-latest.json.gz
+	@mv $(CACHEDIR)/latest-flat.tsv.tmp public_html/latest-flat.tsv
+	@mv $(CACHEDIR)/getev-latest.json.gz.tmp public_html/getev-latest.json.gz
 latest_flat.gz: latest_flat
-	gzip -9n <public_html/latest-flat.tsv >public_html/latest-flat.tsv.gz
+	@gzip -9n <public_html/latest-flat.tsv >public_html/latest-flat.tsv.gz
 latest_locator: public_html/getev-latest.json.gz
 	whput --in-manifest public_html/getev-latest.json.gz >public_html/getev-latest.locator.tmp
 	mv public_html/getev-latest.locator.tmp public_html/getev-latest.locator
 vis_data:
-	cd get_evidence_vis && ./ProcessTableForVis.pl ../public_html/latest-flat.tsv nsSNP-freq.gff >../public_html/latest_vis_data.tsv.tmp
-	cd public_html && mv latest_vis_data.tsv.tmp latest_vis_data.tsv
+	@cd get_evidence_vis && ./ProcessTableForVis.pl ../public_html/latest-flat.tsv nsSNP-freq.gff >../public_html/latest_vis_data.tsv.tmp
+	@cd public_html && mv latest_vis_data.tsv.tmp latest_vis_data.tsv
 bionotate_history:
-	./export_bionotate.php > $(CACHEDIR)/bionotate-history.csv.tmp
-	gzip < $(CACHEDIR)/bionotate-history.csv.tmp > public_html/bionotate-history.csv.gz
+	@./export_bionotate.php > $(CACHEDIR)/bionotate-history.csv.tmp
+	@gzip < $(CACHEDIR)/bionotate-history.csv.tmp > public_html/bionotate-history.csv.gz
 DATADIR:=$(shell . server/script/config-local.sh 2>/dev/null && echo $$DATA)
 analysis_data_tarball.%.locator: $(DATADIR)/b130_SNPChrPosOnRef_36_3_sorted.bcp $(DATADIR)/b132_SNPChrPosOnRef_37_1_sorted.bcp \
  $(DATADIR)/knownGene_hg18_sorted.txt $(DATADIR)/knownGene_hg19_sorted.txt \
