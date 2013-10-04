@@ -83,8 +83,8 @@ latest_flat:
 latest_flat.gz: latest_flat
 	@gzip -9n <public_html/latest-flat.tsv >public_html/latest-flat.tsv.gz
 latest_locator: public_html/getev-latest.json.gz
-	whput --in-manifest public_html/getev-latest.json.gz >public_html/getev-latest.locator.tmp
-	mv public_html/getev-latest.locator.tmp public_html/getev-latest.locator
+	@whput --in-manifest public_html/getev-latest.json.gz >public_html/getev-latest.locator.tmp
+	@mv public_html/getev-latest.locator.tmp public_html/getev-latest.locator
 vis_data:
 	@cd get_evidence_vis && ./ProcessTableForVis.pl ../public_html/latest-flat.tsv nsSNP-freq.gff >../public_html/latest_vis_data.tsv.tmp
 	@cd public_html && mv latest_vis_data.tsv.tmp latest_vis_data.tsv
