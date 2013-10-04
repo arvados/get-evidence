@@ -106,7 +106,7 @@ sub getTotalQualityScore {
   my @data = @{$data_ref};
   my %columns = %{$columns_ref};
   my $total = 0;
-  if ($data[$columns{"qualityscore_in_silico"}] ne "-" and $data[$columns{"qualityscore_severity"}] ne "!") {
+  if ($data[$columns{"qualityscore_in_silico"}] ne "-" and $data[$columns{"qualityscore_in_silico"}] ne "!") {
     $total += $data[$columns{"qualityscore_in_silico"}];
   }
   if ($data[$columns{"qualityscore_in_vitro"}] ne "-" and $data[$columns{"qualityscore_in_vitro"}] ne "!") {
@@ -121,7 +121,7 @@ sub getTotalQualityScore {
   if ($data[$columns{"qualityscore_severity"}] ne "-" and $data[$columns{"qualityscore_severity"}] ne "" and $data[$columns{"qualityscore_severity"}] ne "!") {
     $total += $data[$columns{"qualityscore_severity"}];
   }
-  if ($data[$columns{"qualityscore_treatability"}] ne "-" and $data[$columns{"qualityscore_severity"}] ne "" and $data[$columns{"qualityscore_severity"}] ne "!") {
+  if ($data[$columns{"qualityscore_treatability"}] ne "-" and $data[$columns{"qualityscore_treatability"}] ne "" and $data[$columns{"qualityscore_treatability"}] ne "!") {
     $total += $data[$columns{"qualityscore_treatability"}];
   }
   
@@ -210,11 +210,11 @@ sub addStars {
   if ($data[$columns{"gene_in_genetests"}] eq "Y") {
     $in_silico_min++;
   }
-  if ($data[$columns{"nblosum100>2"}] eq "Y") {
+  if (defined($columns{"nblosum100>2"}) && ($data[$columns{"nblosum100>2"}] eq "Y")) {
     $in_silico_min++;
   }
   my $is_unassigned_or_less_than = ( $in_silico_min > 0 and
-                                  ( $data[$columns{"qualityscore_in_silico"}] eq "-" 
+                                  ( $data[$columns{"qualityscore_in_silico"}] =~ /^(\-|!)$/ 
                                     or $data[$columns{"qualityscore_in_silico"}] < $in_silico_min ) );
   if ($is_unassigned_or_less_than) {
     $data[$columns{"qualityscore_in_silico"}] = $in_silico_min;
