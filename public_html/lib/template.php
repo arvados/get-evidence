@@ -100,10 +100,10 @@ foreach(split(' ','addEvent message edit-autosave-submit evidence report show-wh
 
 	<div class="main">
 		
-			<div class="content"><?php if (!(ereg ("evidence.personalgenomes.org", $_SERVER["HTTP_HOST"]))) { ?>
+			<div class="content"><?php if (!(ereg ("evidence.pgp-hms.org", $_SERVER["HTTP_HOST"]))) { ?>
 
 <div class="redalert">
-<P>Note: This is <strong>not</strong> the real GET-Evidence site.  It is a <strong>development sandbox</strong>.  If you expect the site to be stable and you want your edits to be saved, use <A href="http://evidence.personalgenomes.org<?=$_SERVER['REQUEST_URI']?>">evidence.personalgenomes.org<?=$_SERVER['REQUEST_URI']?></A> instead.</P>
+<P>Note: This is <strong>not</strong> the real GET-Evidence site.  It is a <strong>development sandbox</strong>.  If you expect the site to be stable and you want your edits to be saved, use <A href="http://evidence.pgp-hms.org<?=$_SERVER['REQUEST_URI']?>">evidence.pgp-hms.org<?=$_SERVER['REQUEST_URI']?></A> instead.</P>
 </div>
 
 
