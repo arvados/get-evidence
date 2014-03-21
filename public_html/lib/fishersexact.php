@@ -1,7 +1,7 @@
 <?php
     ;
 
-// Written by Madeleine Price Ball & Clinical Future, see git-blame.
+// Written by Madeleine Price Ball & Curoverse, Inc, see git-blame.
 // See GET-Evidence project for licensing.
 
 function fishersexact_compute ($figs, $htmlformat=FALSE)

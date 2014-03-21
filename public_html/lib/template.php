@@ -161,7 +161,7 @@ foreach(split(' ','addEvent message edit-autosave-submit evidence report show-wh
 </div>
 
     <?php if (!$gOut["nofooter"]) { ?>
-<div class="footer">Data available under <A href="http://creativecommons.org/publicdomain/zero/1.0/">CC0</A>.  Web application &copy; 2010 Clinical Future, Inc.</div>
+<div class="footer">Data available under <A href="http://creativecommons.org/publicdomain/zero/1.0/">CC0</A>.  Web application &copy; 2010-2014 Curoverse, Inc.</div>
 <!--
 Template from <a href="http://arcsin.se">Arcsin</a>
 Current oid <?php echo getCurrentUser("oid"); ?>
