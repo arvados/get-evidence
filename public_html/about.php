@@ -39,8 +39,8 @@ The source files for genome data, along with GET-Evidence's annotations, are pro
 
 The web service software is available under the GNU General Public License, version 3.
 
-* Project home: "https://redmine.clinicalfuture.com/projects/get-evidence":https://redmine.clinicalfuture.com/projects/get-evidence
-* Source code repository: "git://git.clinicalfuture.com/get-evidence.git":git://git.clinicalfuture.com/get-evidence.git
+* Project home: "https://arvados.org/projects/get-evidence":https://arvados.org/projects/get-evidence
+* Source code repository: "git://git.curoverse.com/get-evidence.git":git://git.curoverse.com/get-evidence.git
 * Source code repository mirror: "https://github.com/tomclegg/get-evidence":https://github.com/tomclegg/get-evidence
 
 h2. Community
