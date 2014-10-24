@@ -303,7 +303,7 @@ class GenomeReport {
                     // Fetch/update the local cache of the output data
                     $ok = shell_exec('flock --wait 1 --exclusive --nonblock '
                                      .escapeshellarg($this->lockfile)
-                                     .'flock --wait 1 --exclusive --nonblock '
+                                     .' flock --wait 1 --exclusive --nonblock '
                                      .escapeshellarg($this->whpipeline_lockfile)
                                      .' whget -r '
                                      .escapeshellarg($last_step['output_data_locator'])
