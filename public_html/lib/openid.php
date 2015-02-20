@@ -4,9 +4,11 @@
 // Copyright: see COPYING
 // Authors: see git-blame(1)
 
-ini_set ('include_path',
-	 dirname(dirname(dirname(__FILE__))) . "/php-openid"
-	 . PATH_SEPARATOR . ini_get('include_path'));
+// remove this horrible hack. Using system packages for php-openid now.
+// Ward, 20150108 
+//ini_set ('include_path',
+//	 dirname(dirname(dirname(__FILE__))) . "/php-openid"
+//	 . PATH_SEPARATOR . ini_get('include_path'));
 
 require_once "Auth/OpenID/Consumer.php";
 require_once "Auth/OpenID/MySQLStore.php";
