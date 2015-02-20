@@ -652,7 +652,6 @@ function evidence_get_report ($snap, $variant_id)
   }
 
   // Get all items relating to the given variant
-
   $v =& theDb()->getAll ("SELECT variants.*, $table.*, genomes.*, datasets.*, variant_occurs.*,
 			variants.variant_id AS variant_id,
 			$table.genome_id AS genome_id,
@@ -740,7 +739,7 @@ function evidence_get_report ($snap, $variant_id)
         else
           $bionotate_key = htmlentities($row['article_pmid']."-rs".
                                         $v[0]['variant_rsid']);
-        $ctx = stream_context_create(array('http'=>array('timeout'=>8)));
+        $ctx = stream_context_create(array('http'=>array('timeout'=>1)));
         if (preg_match ('{SNIPPET_XML = "(.*?)";?\r?\n}s',
                         $html = @file_get_contents ('http://bionotate.biotektools.org/GET-Evidence/pmid/'.$bionotate_key, 0, $ctx),
                         $regs) ||
