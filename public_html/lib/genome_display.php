@@ -271,7 +271,7 @@ class GenomeReport {
           $uuid = trim(file_get_contents($this->whpipeline_stdout));
         } else { return $ret; }
 
-        $cmd = 'export HOME=/home/trait && . $HOME/.config/arvados/settings.conf && arv pipeline_instance get --uuid '.escapeshellarg($uuid);
+        $cmd = 'export HOME=/home/trait && arv pipeline_instance get --uuid '.escapeshellarg($uuid);
         $pipeline = json_decode(shell_exec($cmd), true);
 
         if ( $pipeline["components_summary"]["failed"] > 0 ) {
@@ -291,6 +291,7 @@ class GenomeReport {
             $n=1;
           }
           $ret["progress"] = $todo/$n;
+          $ret["status"] = "processing";
         }
 
         if ($ret["status"] == "success") {
