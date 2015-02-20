@@ -33,16 +33,6 @@ if (! file_exists($fullPath)) {
   } elseif (is_link($locator_symlink = $GLOBALS["gBackendBaseDir"] . "/upload/" . $genome_id . "/input.locator")) {
     $locator = readlink($locator_symlink);
     $locator_esc = escapeshellarg($locator);
-
-//	//$manifest = `whget ''$locator_esc`;
-//	$manifest = `export HOME=/get-evidence && . /get-evidence/public_html/.arvenv && arv-get ''$locator_esc`;
-//	if (preg_match('/ 0:(\d+):(\S+)$/', $manifest, $regs)) {
-//	    //$passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
-//	    $passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
-//	    $fsize = $regs[1];
-//	    $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $regs[2]);
-//	}
-
   }
 }
 
