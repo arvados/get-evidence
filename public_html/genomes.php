@@ -134,7 +134,7 @@ function list_uploaded_genomes($user_oid, $global_human_prefix=false) {
             $returned_text .= "<TR><TD>" . htmlspecialchars($result['nickname']) . "</TD><TD>";
             $huid = htmlspecialchars($result['global_human_id']);
             if (preg_match('{^hu}', $huid))
-                $huid = "<A href=\"https://my.personalgenomes.org/profile/$huid\">$huid</A>";
+                $huid = "<A href=\"https://my.pgp-hms.org/profile/$huid\">$huid</A>";
             $returned_text .= $huid . "</TD><TD>";
             if ($user['is_admin'])
                 $returned_text .= $result['email'] . "</TD><TD>\n";
