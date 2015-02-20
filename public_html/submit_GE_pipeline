@@ -1,0 +1,20 @@
+#!/bin/bash
+
+input_sample="$1"
+
+if [ "$input_sample" == "" ]
+then
+  echo "ERROR: provide input locator"
+  exit 1
+fi
+
+template_uuid="su92l-p5p6p-9c4hizgfi92uwkt"
+
+opt=""
+opt=" $opt GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
+
+export HOME="/home/trait"
+z=`. $HOME/.config/arvados/settings.conf && arv-run-pipeline-instance --submit --template $template_uuid $opt`
+echo $z
+
+

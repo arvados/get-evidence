@@ -15,31 +15,35 @@ if (@$_REQUEST['download_type'] == 'ns') {
 }
 
 if (! file_exists($fullPath)) {
-    if (file_exists($fullPath . '.gff')) {
-	$ext = $ext . '.gff';
-	$fullPath = $fullPath . '.gff';
-    } elseif (file_exists($fullPath . '.gz')) {
-	$ext = $ext . '.gz';
-	$fullPath = $fullPath . '.gz';
-    } elseif (file_exists($fullPath . '.gff.gz')) {
-	$ext = $ext . '.gff.gz';
-	$fullPath = $fullPath . '.gff.gz';
-    } elseif (file_exists($fullPath . '.bz2')) {
-	$ext = $ext . '.bz2';
-	$fullPath = $fullPath . '.bz2';
-    } elseif (file_exists($fullPath . '.gff.bz2')) {
-	$ext = $ext . '.gff.bz2';
-	$fullPath = $fullPath . '.gff.bz2';
-    } elseif (is_link($locator_symlink = $GLOBALS["gBackendBaseDir"] . "/upload/" . $genome_id . "/input.locator")) {
-	$locator = readlink($locator_symlink);
-	$locator_esc = escapeshellarg($locator);
-	$manifest = `whget ''$locator_esc`;
-	if (preg_match('/ 0:(\d+):(\S+)$/', $manifest, $regs)) {
-	    $passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
-	    $fsize = $regs[1];
-	    $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $regs[2]);
-	}
-    }
+  if (file_exists($fullPath . '.gff')) {
+    $ext = $ext . '.gff';
+    $fullPath = $fullPath . '.gff';
+  } elseif (file_exists($fullPath . '.gz')) {
+    $ext = $ext . '.gz';
+    $fullPath = $fullPath . '.gz';
+  } elseif (file_exists($fullPath . '.gff.gz')) {
+    $ext = $ext . '.gff.gz';
+    $fullPath = $fullPath . '.gff.gz';
+  } elseif (file_exists($fullPath . '.bz2')) {
+    $ext = $ext . '.bz2';
+    $fullPath = $fullPath . '.bz2';
+  } elseif (file_exists($fullPath . '.gff.bz2')) {
+    $ext = $ext . '.gff.bz2';
+    $fullPath = $fullPath . '.gff.bz2';
+  } elseif (is_link($locator_symlink = $GLOBALS["gBackendBaseDir"] . "/upload/" . $genome_id . "/input.locator")) {
+    $locator = readlink($locator_symlink);
+    $locator_esc = escapeshellarg($locator);
+
+//	//$manifest = `whget ''$locator_esc`;
+//	$manifest = `export HOME=/get-evidence && . /get-evidence/public_html/.arvenv && arv-get ''$locator_esc`;
+//	if (preg_match('/ 0:(\d+):(\S+)$/', $manifest, $regs)) {
+//	    //$passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
+//	    $passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
+//	    $fsize = $regs[1];
+//	    $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $regs[2]);
+//	}
+
+  }
 }
 
 $nickname = $_REQUEST['download_nickname'];

@@ -67,9 +67,9 @@ function print_content($x)
       continue;
 
     $variant_link = evidence_get_variant_name ($row, " ", true);
-    $version_link = "<A href=\"".evidence_get_variant_name(&$row,"-").";$row[edit_id]\">view</A>";
+    $version_link = "<A href=\"".evidence_get_variant_name($row,"-").";$row[edit_id]\">view</A>";
     if (!$lastrow || $lastrow["variant_id"] != $row["variant_id"])
-      $variant_link = "<A href=\"".evidence_get_variant_name(&$row,"-")."\">$variant_link</A>";
+      $variant_link = "<A href=\"".evidence_get_variant_name($row,"-")."\">$variant_link</A>";
 
     $lastrow = $row;
 

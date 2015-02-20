@@ -1478,7 +1478,7 @@ ORDER BY edit_timestamp DESC, edit_id DESC, previous_edit_id DESC
     else if ($row["genome_id"]) $li .= htmlspecialchars($row["genome_name"]).$summary;
     else $li .= "variant$summary";
 
-    $variant_name = evidence_get_variant_name (&$row, "-");
+    $variant_name = evidence_get_variant_name ($row, "-");
     $li .= " <A href=\"".$variant_name.";".$row["edit_id"]."\">view</A>";
 
     $li .= "</LI>\n";
