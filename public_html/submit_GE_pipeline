@@ -8,10 +8,11 @@ then
   exit 1
 fi
 
-template_uuid="su92l-p5p6p-9c4hizgfi92uwkt"
+export HOME="/home/trait"
+
+template_uuid=`jq -r '.["get-evidence-pipeline"]' $HOME/.config/arvados/config.json`
 
 opt="GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
 
-export HOME="/home/trait"
 z=`. $HOME/.config/arvados/settings.sh && arv-run-pipeline-instance --submit --template $template_uuid $opt`
 echo $z
