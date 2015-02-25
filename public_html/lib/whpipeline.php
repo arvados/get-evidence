@@ -33,5 +33,3 @@ function run_whpipeline($locator, $shasum, $quick=false)
   shell_exec( $cmd );
 
 }
-
-
