@@ -10,8 +10,7 @@ fi
 
 template_uuid="su92l-p5p6p-9c4hizgfi92uwkt"
 
-opt=""
-opt=" $opt GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
+opt="GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
 
 export HOME="/home/trait"
 z=`. $HOME/.config/arvados/settings.sh && arv-run-pipeline-instance --submit --template $template_uuid $opt`
