@@ -188,11 +188,61 @@ Set up cron job to run "make" periodically.
 
  echo "12 3 * * * $USER cd $HOME/get-evidence && make daily" | sudo tee /etc/cron.d/get-evidence
 
-Run through the daily make once to set up the flat files, some of which 
+Run through the daily make once to set up the flat files, some of which
 GET-Evidence will expect to find.
 
  cd ~/get-evidence
  make daily
+
+ADDITIONAL CONFIG FILES (as of 2015-02-25):
+
+There will need to be an installation of the Arvados command line tools.  Both
+the Python and Ruby Arvados SDK need to be installed.  Please refer
+to http://doc.arvados.org/sdk/python/sdk-python.html and http://doc.arvados.org/sdk/ruby/index.html
+for intallation instructions.
+
+The JSON parsing tool, 'jq', also needs to be installed.  You can install from source
+from http://stedolan.github.io/jq/ or do something like:
+
+ $ sudo apt-get install jq
+
+In addition, there are (now) three config files that need to be placed in a known location:
+
+  /home/trait/.config/arvados/settings.conf
+  /home/trait/.config/arvados/settings.sh
+  /home/trait/.config/arvados/config.json
+
+The /home/trait/.config/arvados/settings.conf holds the ARVADOS_API_TOKEN and
+ARVADOS_API_KEY needed to contact the Arvados installation for pipeline and
+job submission.
+
+For example:
+ $ cat settings.conf
+ ARVADOS_API_TOKEN=abcdefghijklmnopqrstuvwxyz012345678012345678901234
+ ARVADOS_API_HOST=t1234.arvadosapi.com
+
+
+The /home/trait/.config/arvados/settings.sh is a shell script whose primary
+purpose is to export the ARVADOS_API_TOKEN and ARVADOS_API_KEY.  This is
+a workaround for 'arv-run-pipeline-instance' that, as of this writing,
+does not read the 'settings.conf' file.
+
+For example:
+ $ cat settings.sh
+ HISTIGNORE=$HISTIGNORE:'export ARVADOS_API_TOKEN=*'
+ export ARVADOS_API_TOKEN=abcdefghijklmnopqrstuvwxyz012345678012345678901234
+ export ARVADOS_API_HOST=t1234.arvadosapi.com
+ unset ARVADOS_API_HOST_INSECURE
+
+The /home/trait/.config/arvados/config.json has the pipeline template UUID
+needed to submit jobs.
+
+For example:
+ $ cat config.json
+ {
+   "get-evidence-pipeline" : "su92l-p5p6p-9c4hizgfi92uwkt"
+ }
+
 
 ------
 
