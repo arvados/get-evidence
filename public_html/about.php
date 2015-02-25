@@ -35,7 +35,7 @@ h2. Downloading data or source code
 
 User-contributed variant interpretations are accepted and published under CC0 -- i.e., without copyright protection. You are welcome to obtain the data either by means of the web service or by "downloading a copy of the database":download.
 
-The source files for genome data, along with GET-Evidence's annotations, are provided alongside genome reports. See our "file format descriptions":upload_and_source_file_formats for more information on the format we use.
+The source files for genome data, along with GET-Evidence's annotations, are provided alongside genome reports. See our "file format descriptions":guide_upload_and_annotated_file_formats for more information on the format we use.
 
 The web service software is available under the GNU General Public License, version 3.
 

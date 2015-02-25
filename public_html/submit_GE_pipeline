@@ -1,0 +1,18 @@
+#!/bin/bash
+
+input_sample="$1"
+
+if [ "$input_sample" == "" ]
+then
+  echo "ERROR: provide input locator"
+  exit 1
+fi
+
+export HOME="/home/trait"
+
+template_uuid=`jq -r '.["get-evidence-pipeline"]' $HOME/.config/arvados/config.json`
+
+opt="GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
+
+z=`. $HOME/.config/arvados/settings.sh && arv-run-pipeline-instance --submit --template $template_uuid $opt`
+echo $z

@@ -15,31 +15,38 @@ if (@$_REQUEST['download_type'] == 'ns') {
 }
 
 if (! file_exists($fullPath)) {
-    if (file_exists($fullPath . '.gff')) {
-	$ext = $ext . '.gff';
-	$fullPath = $fullPath . '.gff';
-    } elseif (file_exists($fullPath . '.gz')) {
-	$ext = $ext . '.gz';
-	$fullPath = $fullPath . '.gz';
-    } elseif (file_exists($fullPath . '.gff.gz')) {
-	$ext = $ext . '.gff.gz';
-	$fullPath = $fullPath . '.gff.gz';
-    } elseif (file_exists($fullPath . '.bz2')) {
-	$ext = $ext . '.bz2';
-	$fullPath = $fullPath . '.bz2';
-    } elseif (file_exists($fullPath . '.gff.bz2')) {
-	$ext = $ext . '.gff.bz2';
-	$fullPath = $fullPath . '.gff.bz2';
-    } elseif (is_link($locator_symlink = $GLOBALS["gBackendBaseDir"] . "/upload/" . $genome_id . "/input.locator")) {
-	$locator = readlink($locator_symlink);
-	$locator_esc = escapeshellarg($locator);
-	$manifest = `whget ''$locator_esc`;
-	if (preg_match('/ 0:(\d+):(\S+)$/', $manifest, $regs)) {
-	    $passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
-	    $fsize = $regs[1];
-	    $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $regs[2]);
-	}
+  if (file_exists($fullPath . '.gff')) {
+    $ext = $ext . '.gff';
+    $fullPath = $fullPath . '.gff';
+  } elseif (file_exists($fullPath . '.gz')) {
+    $ext = $ext . '.gz';
+    $fullPath = $fullPath . '.gz';
+  } elseif (file_exists($fullPath . '.gff.gz')) {
+    $ext = $ext . '.gff.gz';
+    $fullPath = $fullPath . '.gff.gz';
+  } elseif (file_exists($fullPath . '.bz2')) {
+    $ext = $ext . '.bz2';
+    $fullPath = $fullPath . '.bz2';
+  } elseif (file_exists($fullPath . '.gff.bz2')) {
+    $ext = $ext . '.gff.bz2';
+    $fullPath = $fullPath . '.gff.bz2';
+  } elseif (is_link($locator_symlink = $GLOBALS["gBackendBaseDir"] . "/upload/" . $genome_id . "/input.locator")) {
+    $locator = readlink($locator_symlink);
+    $locator_esc = escapeshellarg($locator);
+
+    if (preg_match('/^([\da-f]{32}(\+\d+)?)/', $locator, $m)) {
+      $pdh = $m[0];
+      $pdh_esc = escapeshellarg($pdh);
+      $fn_and_sz = trim(`HOME=/home/trait arv-get --no-progress ''$pdh_esc | awk '{print \$NF}' `);
+      $vals = preg_split( '/:/', $fn_and_sz );
+      $fsize = trim($vals[1]);
+      $fn = trim($vals[2]);
+      $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $fn);
+      $passthru_command = trim("arv-get --no-progress ".escapeshellarg($pdh . "/" . $fn));
     }
+
+  }
+
 }
 
 $nickname = $_REQUEST['download_nickname'];
@@ -65,7 +72,10 @@ if ($permission) {
 	send_headers($nickname, $fsize);
 	ob_clean();
 	flush();
-	passthru($passthru_command);
+
+  putenv("HOME=/home/trait");
+  passthru($passthru_command);
+
     }
     else if (is_readable ($fullPath)) {
 	$fsize = filesize($fullPath);

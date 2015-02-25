@@ -248,7 +248,9 @@ class GenomeReport {
         $this->logfile = $prefix . '-out/log';
         $this->whpipeline_status_json = $prefix . '-out/whpipeline-status.json';
         $this->whpipeline_lockfile = $prefix . '-out/whpipeline.lock';
+        $this->whpipeline_stdout = $prefix . '-out/whpipeline.stdout';
         $this->output_locator = $prefix . '-out/output.locator';
+        $this->output_locator_data = $prefix . '-out/output-data.locator';
         $this->output_directory = $prefix . '-out';
     }
 
@@ -263,111 +265,78 @@ class GenomeReport {
     // Check log and lock files, return information on processing status.
     public function status() {
         $ret = array('progress' => 0, 'status' => 'unknown');
-        $still_processing = false;
-        if (file_exists($this->whpipeline_status_json)) {
-            $pipeline = json_decode(file_get_contents($this->whpipeline_status_json), true);
-            if (file_exists($this->whpipeline_lockfile) &&
-                shell_exec('fuser ""'.escapeshellarg($this->whpipeline_lockfile))) {
-                $still_processing = true;
-            }
-            $n_done = 0;
-            $n_tot = 0;
-            foreach ($pipeline['steps'] as $step) {
-                if ($step['complete'])
-                    ++$n_done;
-                elseif (!$still_processing)
-                    $ret['status'] = 'failed';
-                elseif (!@$step['warehousejob']['starttime']) {
-                    if ($ret['status'] == 'unknown') {
-                        $ret['status'] = $step['name'];
-                        if ($step['warehousejob'])
-                            $ret['status'] .= ' #'.$step['warehousejob']['id'];
-                        $ret['status'] .= ' queued';
-                    }
-                }
-                elseif (preg_match('{^(\d+)\+(\d+)/(\d+)$}', $step['progress'], $regs)) {
-                    $n_done += ($regs[1] + $regs[2]/2) / $regs[3];
-                    if ($ret['status'] == 'unknown')
-                        $ret['status'] = ($step['name']
-                                          . ' #' . $step['warehousejob']['id']
-                                          . " - $regs[1](+$regs[2])/$regs[3]");
-                }
-                ++$n_tot;
-                $last_step = $step;
-            }
-            $ret['progress'] = $n_done / $n_tot;
-            if ($last_step['complete'] && $last_step['output_data_locator']) {
-                // Pipeline is complete
-                if (!is_link($this->output_locator) ||
-                    readlink($this->output_locator) != $last_step['output_data_locator']) {
-                    // Fetch/update the local cache of the output data
-                    $ok = shell_exec('flock --wait 1 --exclusive --nonblock '
-                                     .escapeshellarg($this->lockfile)
-                                     .' flock --wait 1 --exclusive --nonblock '
-                                     .escapeshellarg($this->whpipeline_lockfile)
-                                     .' whget -r '
-                                     .escapeshellarg($last_step['output_data_locator'])
-                                     .'/**/ '
-                                     .escapeshellarg($this->output_directory)
-                                     .'/ && echo ok');
-                    if (trim($ok) == 'ok')
-                        @symlink($last_step['output_data_locator'],
-                                 $this->output_locator);
-                }
-                $ret['status'] = 'finished';
-            }
-            $ret['logfilename'] = false;
+
+        $uuid = "";
+        if (file_exists($this->whpipeline_stdout)) {
+          $uuid = trim(file_get_contents($this->whpipeline_stdout));
+        } else { return $ret; }
+
+        putenv("HOME=/home/trait");
+        $cmd = 'arv pipeline_instance get --uuid '.escapeshellarg($uuid);
+
+        $pipeline = json_decode(shell_exec($cmd), true);
+
+        if ( $pipeline["components_summary"]["failed"] > 0 ) {
+            $ret["status"] = 'failed';
         }
-        elseif (file_exists($this->lockfile)) {
-            $ret['logfilename'] = $this->lockfile;
-            // If not writable, fuser won't work: assume lock is current.
-            $fuser_test = shell_exec("fuser ''" . 
-                                     escapeshellarg($this->lockfile) . 
-                                     ' >/dev/null && echo -n ok');
-            if (!is_writable ($this->lockfile) || "ok" == $fuser_test) {
-                $still_processing = true;
-                $total_steps = 100;
-                foreach (file($this->lockfile) as $logline) {
-                    if (preg_match ('{^#status (\d*)/?(\d*)( (.+))?}', 
-                                    $logline, 
-                                    $regs)) {
-                        if ($regs[2] > 0) 
-                            $total_steps = $regs[2];
-                        $ret['progress'] = $regs[1] / $total_steps;
-                        if ($regs[4])
-                            $ret['status'] = $regs[4];
-                    }
-                }
-            }
-        } elseif (!file_exists($this->sourcefile)) {
-            $ret['logfilename'] = false;
-            $ret['progress'] = 1;
-            $ret['status'] = 'finished';
-        } else {
-            $ret['logfilename'] = $this->logfile;
-            if (file_exists($this->logfile) && 
-                file_exists($this->variantsfile)) {
-                $ret['progress'] = 1;
-                $ret['status'] = 'finished';
-            }
+        elseif ( ($pipeline["components_summary"]["todo"] == 0) &&
+                 ($pipeline["components_summary"]["done"] > 0) ) {
+            $ret["status"] = "success";
+            $ret["progress"] = 1;
         }
-        if (!file_exists($ret['logfilename']) || 
-            !is_readable($ret['logfilename']))
-            $ret['logfilename'] = false;
-        if ($ret['logfilename']) {
-            $ret['log'] = file_get_contents($ret['logfilename']);
-            $this->trim_log($ret['log']);
-            $ret['logmtime'] = filemtime ($ret['logfilename']);
-            $ret['log'] .= "\n\nLog file ends: ".date('r',$ret['logmtime']);
+        else {
+          $n = 0;
+          $todo += $pipeline["components_summary"]["todo"];
+          $done += $pipeline["components_summary"]["done"];
+          $n = $todo+$done;
+          if ($n==0) {
+            $n=1;
+          }
+          $ret["progress"] = $todo/$n;
+          $ret["status"] = "processing";
         }
+
+        if ($ret["status"] == "success") {
+
+          $output_gff_hash = $pipeline["components"]["GenomeAnalyzer"]["job"]["output"];
+          $output_report_hash = $pipeline["components"]["RefreshReport"]["job"]["output"];
+
+          // Pipeline is complete
+          if (!is_link($this->output_locator) ||
+              readlink($this->output_locator) != $output_report_hash) {
+              // Fetch/update the local cache of the output data
+              $od = escapeshellarg($this->output_directory);
+
+              $cmd = 'flock --wait 1 --exclusive --nonblock '
+                     .escapeshellarg($this->lockfile)
+                     .' bash -c " arv-get --no-progress '.escapeshellarg($output_gff_hash).'/ '.$od.' && '
+                     .' mv '.$od.'/out-data/* '.$od.' && rmdir '.$od.'/out-data && '
+                     .' arv-get --no-progress '.escapeshellarg($output_report_hash).'/ '.$od.' && '
+                     .' mv '.$od.'/out-data/* '.$od.' && rmdir '.$od.'/out-data " && '
+                     .' echo ok';
+
+              $ok = shell_exec($cmd);
+              if (trim($ok) == 'ok') {
+                @symlink($output_report_hash, $this->output_locator);
+                @symlink($output_gff_hash, $this->output_locator_data);
+              }
+          }
+          $ret['status'] = 'finished';
+        }
+
+        $ret['logfilename'] = false;
+        $ret['log'] = "";
+        $ret['logmtime'] = "";
+
         $ret['result_url'] =
-            'http://' . $_SERVER['HTTP_HOST'] .
-            '/genomes?display_genome_id=' . $this->genomeID;
+          'http://' . $_SERVER['HTTP_HOST'] .
+          '/genomes?display_genome_id=' . $this->genomeID;
         if ($_REQUEST['access_token']) {
-            $ret['result_url'] .=
-                '&access_token=' .
-                urlencode($_REQUEST['access_token']);
+          $ret['result_url'] .=
+            '&access_token=' .
+            urlencode($_REQUEST['access_token']);
         }
+
         return $ret;
     }
 
@@ -452,15 +421,14 @@ class GenomeReport {
             $data_size = @filesize ($this->sourcefile);
         else if (is_link($this->input_locator)) {
             $manifest = readlink ($this->input_locator);
-            if (preg_match ('/ 0:(\d+)/', `whget $manifest`, $regs))
-                $data_size = $regs[1];
+            $data_size = 1;
         }
         if ($data_size) {
             $head_data["Download"] = "<a href=\"/genome_download.php?" . 
                 "download_genome_id=" . $this->genomeID . 
                 "&amp;download_nickname=" . urlencode($realname) . 
                 $access_token_if_needed .
-                "\">source data</a> (" . humanreadable_size($data_size) . ")";
+                "\">source data</a>";
         }
         $outdir = $GLOBALS["gBackendBaseDir"]."/upload/" . $this->genomeID . 
             "-out";
