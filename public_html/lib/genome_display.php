@@ -271,7 +271,9 @@ class GenomeReport {
           $uuid = trim(file_get_contents($this->whpipeline_stdout));
         } else { return $ret; }
 
-        $cmd = 'export HOME=/home/trait && arv pipeline_instance get --uuid '.escapeshellarg($uuid);
+        putenv("HOME=/home/trait");
+        $cmd = 'arv pipeline_instance get --uuid '.escapeshellarg($uuid);
+
         $pipeline = json_decode(shell_exec($cmd), true);
 
         if ( $pipeline["components_summary"]["failed"] > 0 ) {
@@ -305,7 +307,7 @@ class GenomeReport {
               // Fetch/update the local cache of the output data
               $od = escapeshellarg($this->output_directory);
 
-              $cmd = 'export HOME=/home/trait && . $HOME/.config/arvados/settings.conf && flock --wait 1 --exclusive --nonblock '
+              $cmd = 'flock --wait 1 --exclusive --nonblock '
                      .escapeshellarg($this->lockfile)
                      .' bash -c " arv-get --no-progress '.escapeshellarg($output_gff_hash).'/ '.$od.' && '
                      .' mv '.$od.'/out-data/* '.$od.' && rmdir '.$od.'/out-data && '

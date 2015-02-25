@@ -15,5 +15,3 @@ opt="GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
 export HOME="/home/trait"
 z=`. $HOME/.config/arvados/settings.sh && arv-run-pipeline-instance --submit --template $template_uuid $opt`
 echo $z
-
-
