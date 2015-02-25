@@ -196,10 +196,10 @@ GET-Evidence will expect to find.
 
 ADDITIONAL CONFIG FILES (as of 2015-02-25):
 
-There will need to be an installation of the Arvados command line tools.  As root,
-execute the following commands:
-
- gem install --no-user-install arvados google-api-client json trollop activesupport andand oj
+There will need to be an installation of the Arvados command line tools.  Both
+the Python and Ruby Arvados SDK need to be installed.  Please refer
+to http://doc.arvados.org/sdk/python/sdk-python.html and http://doc.arvados.org/sdk/ruby/index.html
+for intallation instructions.
 
 The JSON parsing tool, 'jq', also needs to be installed.  You can install from source
 from http://stedolan.github.io/jq/ or do something like:
