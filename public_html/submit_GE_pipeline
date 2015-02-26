@@ -14,5 +14,5 @@ template_uuid=`jq -r '.["get-evidence-pipeline"]' $HOME/.config/arvados/config.j
 
 opt="GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
 
-z=`. $HOME/.config/arvados/settings.sh && arv-run-pipeline-instance --submit --template $template_uuid $opt`
+z=`. $HOME/.config/arvados/settings.sh && /usr/local/rvm/bin/rvm-exec default arv-run-pipeline-instance --submit --template $template_uuid $opt`
 echo $z

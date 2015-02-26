@@ -20,7 +20,7 @@ function run_whpipeline($locator, $shasum, $quick=false)
   }
   $status_json = $out_dir.'/whpipeline-status.json';
 
-  $cmd = "/get-evidence/public_html/submit_GE_pipeline";
+  $cmd = "/home/get-evidence/public_html/submit_GE_pipeline";
   $cmd .= ' '.escapeshellarg( $locator );
   $cmd .= ' 2>&1 > '.escapeshellarg("$out_dir/whpipeline.stdout");
 
