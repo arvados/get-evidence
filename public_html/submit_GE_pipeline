@@ -11,8 +11,10 @@ fi
 export HOME="/home/trait"
 
 template_uuid=`jq -r '.["get-evidence-pipeline"]' $HOME/.config/arvados/config.json`
+getev_latest=`jq -r '.["getev-latest"]' $HOME/.config/arvados/config.json`
 
 opt="GenomeAnalyzer::INPUT_SAMPLE=$input_sample"
+opt=" $opt RefreshReport::GETEV_LATEST=$getev_latest"
 
 z=`. $HOME/.config/arvados/settings.sh && /usr/local/rvm/bin/rvm-exec default arv-run-pipeline-instance --submit --template $template_uuid $opt`
 echo $z
