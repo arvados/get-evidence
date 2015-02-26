@@ -272,7 +272,7 @@ class GenomeReport {
         } else { return $ret; }
 
         putenv("HOME=/home/trait");
-        $cmd = 'arv pipeline_instance get --uuid '.escapeshellarg($uuid);
+        $cmd = '/usr/local/rvm/bin/rvm-exec default arv pipeline_instance get --uuid '.escapeshellarg($uuid);
 
         $pipeline = json_decode(shell_exec($cmd), true);
 
