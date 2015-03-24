@@ -32,4 +32,7 @@ function run_whpipeline($locator, $shasum, $quick=false)
   $cmd = 'touch '.escapeshellarg($out_dir).'/lock';
   shell_exec( $cmd );
 
+  $cmd = 'rm -f '.escapeshellarg($out_dir).'/output.locator';
+  shell_exec( $cmd );
+
 }
