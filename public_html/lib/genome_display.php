@@ -309,14 +309,16 @@ class GenomeReport {
 
               $cmd = 'flock --wait 1 --exclusive --nonblock '
                      .escapeshellarg($this->lockfile)
-                     .' bash -c " arv-get --no-progress '.escapeshellarg($output_gff_hash).'/ '.$od.' && '
+                     .' bash -c " arv-get -f --no-progress '.escapeshellarg($output_gff_hash).'/ '.$od.' && '
                      .' mv '.$od.'/out-data/* '.$od.' && rmdir '.$od.'/out-data && '
-                     .' arv-get --no-progress '.escapeshellarg($output_report_hash).'/ '.$od.' && '
+                     .' arv-get -f --no-progress '.escapeshellarg($output_report_hash).'/ '.$od.' && '
                      .' mv '.$od.'/out-data/* '.$od.' && rmdir '.$od.'/out-data " && '
                      .' echo ok';
 
               $ok = shell_exec($cmd);
               if (trim($ok) == 'ok') {
+                @unlink( $this->output_locator );
+                @unlink( $this->output_locator_data );
                 @symlink($output_report_hash, $this->output_locator);
                 @symlink($output_gff_hash, $this->output_locator_data);
               }
@@ -701,7 +703,7 @@ function genome_display($shasum, $oid, $is_admin=false, $options=array()) {
         if ($v)
             $returned_text .= "<li>$k: $v</li>\n";
     if ($results["progress"] < 1) {
-        $returned_text .= "<li>Processing status: &nbsp; <div style='margin:3px 0 -3px 0;display:inline-block;height:12px;' id='variant_report_progress' initial-value='{$results['progress']}'></div> &nbsp; <div style='display:inline' id='variant_report_status'>{$results['status']}</div><input type='hidden' id='display_genome_id' value='{$shasum}' /><input type='hidden' id='access_token' value='{$_REQUEST[access_token]}' /></li>\n";
+        $returned_text .= "<li>Processing status: &nbsp; <div style='display:inline' id='variant_report_status'>{$results['status']}</div><input type='hidden' id='display_genome_id' value='{$shasum}' /><input type='hidden' id='access_token' value='{$_REQUEST[access_token]}' /></li>\n";
     }
     $logfile = $results["logfilename"];
     $log = $results["log"];
