@@ -10,10 +10,14 @@
 //	 dirname(dirname(dirname(__FILE__))) . "/php-openid"
 //	 . PATH_SEPARATOR . ini_get('include_path'));
 
+require_once "config.php";
+
 require_once "Auth/OpenID/Consumer.php";
 require_once "Auth/OpenID/MySQLStore.php";
 require_once "Auth/OpenID/SReg.php";
 require_once "Auth/OpenID/AX.php";
+
+require_once('JWT.php');
 
 function getScheme() {
     $scheme = 'http';
@@ -30,10 +34,19 @@ function getReturnTo() {
 		   urlencode($_REQUEST["return_url"]));
 }
 
+function getReturnToOAuth2() {
+    return sprintf("%s://%s/openid_verify_oauth2.php",
+                   getScheme(), $_SERVER['SERVER_NAME']);
+}
+
 function getTrustRoot() {
     return sprintf("%s://%s:%s/",
                    getScheme(), $_SERVER['SERVER_NAME'],
                    $_SERVER['SERVER_PORT']);
+}
+
+function getTrustRootOAuth2() {
+    return sprintf("%s://%s", getScheme(), $_SERVER['SERVER_NAME'] );
 }
 
 function openid_try ($url)
@@ -90,6 +103,91 @@ function openid_try ($url)
     }
   }
 }
+
+
+function openid_verify_oauth2() {
+  global $gOAuth2ClientID;
+  global $gOAuth2ClientSecret;
+
+  $oauth2_code = $_GET['code'];
+
+  $client_id = $gOAuth2ClientID;
+  $client_secret = $gOAuth2ClientSecret;
+
+  $discovery = json_decode(file_get_contents('https://accounts.google.com/.well-known/openid-configuration'));
+  $ctx = stream_context_create(array(
+      'http' => array(
+          'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+          'method'  => 'POST',
+          'ignore_errors' => TRUE,
+          'content' => http_build_query(array(
+              'client_id' => $client_id,
+              'client_secret' => $client_secret,
+              'code' => $oauth2_code,
+              'grant_type' => 'authorization_code',
+              'redirect_uri' => getReturnToOAuth2(),
+              'openid.realm' => getTrustRootOAuth2(),
+          )),
+      ),
+  ));
+
+  $resp = file_get_contents($discovery->token_endpoint, false, $ctx);
+
+  if (!$resp) {
+      error_log(json_encode($http_response_header));
+      $_SESSION["auth_error"] = "Error: not a valid OpenID.";
+      header ("Location: ./");
+      exit;
+  }
+
+  $resp = json_decode($resp);
+
+  if ($resp->error) {
+      error_log(json_encode($http_response_header));
+      $_SESSION["auth_error"] =  "An error occured";
+
+      if ($resp->error_description) {
+        $_SESSION["auth_error"] = $resp->error_description;
+      }
+      header ("Location: ./");
+      exit;
+  }
+
+  $access_token = $resp->access_token;
+  $id_token = $resp->id_token;
+
+  // Skip JWT verification: we got it directly from Google via https, nothing could go wrong.
+  $id_payload = JWT::decode($resp->id_token, null, false);
+  if (!$id_payload->sub) {
+      error_log(json_encode($id_payload));
+  }
+
+  // To get the fullname we need to do a userinfo request.  Build the GET request
+  // with the access token and request JSON response.
+  //
+  $userinfo_url = $discovery->userinfo_endpoint . "?alt=json&access_token=" . urlencode($access_token);
+
+  $info_resp = file_get_contents($userinfo_url);
+  if (!$info_resp) {
+      error_log(json_encode($http_response_header));
+  } else {
+    $userinfo = json_decode($info_resp);
+  }
+
+  $user_id = 'google+' . $id_payload->sub;
+  $user_email = $id_payload->email;
+
+  $fullname = null;
+  if ($userinfo) {
+    $fullname = $userinfo->name;
+  }
+
+  // Finally, update user information and save session state.
+  //
+  $sreg = array( 'email' => $user_email, 'fullname' => $fullname );
+  openid_user_update ($user_id, $sreg);
+}
+
 
 function openid_verify() {
   $consumer = new Auth_OpenID_Consumer (new Auth_OpenID_MySQLStore(theDb()));
