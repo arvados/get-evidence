@@ -135,7 +135,7 @@ function openid_verify_oauth2() {
 
   if (!$resp) {
       error_log(json_encode($http_response_header));
-      $_SESSION["auth_error"] = "Error: not a valid OpenID.";
+      $_SESSION["auth_error"] = "Error: Authorization error.";
       header ("Location: ./");
       exit;
   }
@@ -160,6 +160,9 @@ function openid_verify_oauth2() {
   $id_payload = JWT::decode($resp->id_token, null, false);
   if (!$id_payload->sub) {
       error_log(json_encode($id_payload));
+      $_SESSION["auth_error"] = "Error: Error decoding payload.";
+      header ("Location: ./");
+      exit;
   }
 
   // To get the fullname we need to do a userinfo request.  Build the GET request
