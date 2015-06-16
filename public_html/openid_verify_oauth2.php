@@ -8,7 +8,7 @@ require_once "lib/openid.php";
 
 session_start();
 openid_verify_oauth2();
-if (preg_match('/^\/[^:]*$', $_REQUEST["return_url"], $regs))
+if (preg_match('/^\/[^:]*$/', $_REQUEST["return_url"], $regs))
   header ("Location: $regs[0]");
 else
   header ("Location: /");
