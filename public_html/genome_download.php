@@ -136,9 +136,12 @@ foreach ($db_query as $result) {
 	$permission = true;
 }
 
+$tmp = explode('/',$passthru_command);
+$filename = preg_replace('/\'/','',array_pop($tmp));
+
 if ($permission) {
     if (isset($passthru_command)) {
-	send_headers($nickname, $fsize);
+	send_headers($filename, $fsize);
 	ob_clean();
 	flush();
 
@@ -148,7 +151,7 @@ if ($permission) {
     }
     else if (is_readable ($fullPath)) {
 	$fsize = filesize($fullPath);
-	send_headers($nickname, $fsize);
+	send_headers($filename, $fsize);
 	ob_clean();
 	flush();
 	readfile($fullPath);
