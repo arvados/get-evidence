@@ -136,11 +136,11 @@ foreach ($db_query as $result) {
 	$permission = true;
 }
 
-$tmp = explode('/',$passthru_command);
-$filename = preg_replace('/\'/','',array_pop($tmp));
-
 if ($permission) {
     if (isset($passthru_command)) {
+	$tmp = explode('/',$passthru_command);
+	$filename = preg_replace('/\'/','',array_pop($tmp));
+
 	send_headers($filename, $fsize);
 	ob_clean();
 	flush();
@@ -150,6 +150,8 @@ if ($permission) {
 
     }
     else if (is_readable ($fullPath)) {
+	$tmp = explode('/',$fullPath);
+	$filename = preg_replace('/\'/','',array_pop($tmp));
 	$fsize = filesize($fullPath);
 	send_headers($filename, $fsize);
 	ob_clean();
