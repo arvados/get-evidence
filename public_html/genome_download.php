@@ -24,10 +24,8 @@ function arv_keep_size( $locator ) {
   $n = strlen($cmp_dirname);
 
   $base_fn = basename($fqfn);
-
   $manifest = preg_split( '/\n/', trim(`HOME=/home/trait arv-get --no-progress ''$pdh_esc `) );
   foreach ($manifest as $key => $val) {
-
     $s = substr( $val, 0, $n );
     if ( $s == $cmp_dirname) {
 
@@ -44,7 +42,6 @@ function arv_keep_size( $locator ) {
   return -1;
 }
 
-
 $ext = '';
 $genome_id = $_REQUEST['download_genome_id'];
 if (@$_REQUEST['download_type'] == 'ns') {
@@ -53,7 +50,6 @@ if (@$_REQUEST['download_type'] == 'ns') {
 } else {
     $fullPath = $GLOBALS["gBackendBaseDir"] . "/upload/" . $genome_id . "/genotype";
 }
-
 if (! file_exists($fullPath)) {
   if (file_exists($fullPath . '.gff')) {
     $ext = $ext . '.gff';
@@ -76,8 +72,7 @@ if (! file_exists($fullPath)) {
 
     # We have a difference between 'old-style' locators and 'new-style' locators.
     # In the newer version, the input.locator is a symlink to the file within the collection.
-    # The 'old-style' is just a link to the collection and the input file is assumed to be
-    # the only file in that collection.
+    # The 'old-style' is just a link to the collection.
     #
     # We differentiate between these two cases here by looking at what the input.locator links
     # to.
@@ -85,21 +80,44 @@ if (! file_exists($fullPath)) {
     # Also, some 'old-style' locators have '+K@Ant' strings the end.
     #
     if (preg_match('/^([\da-f]{32}(\+\d+)?[^\/]*)$/', $locator, $m)) {
-
-      # old-style locator, assume first (and only) file is the one we want.
+      # old-style locator
       #
       $pdh = $m[0];
       $pdh_esc = escapeshellarg($pdh);
-      $manifest = trim(`HOME=/home/trait arv-get --no-progress ''$pdh_esc`);
-      if (preg_match('/^(\.[^\s]*) .* 0:(\d+):(\S+)$/', $manifest, $regs)) {
-        //$passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
-        $subdir = preg_replace( '/^\.\/?/', '', $regs[1] );
-        if ( $subdir != "" ) { $subdir = $subdir . "/"; }
-        $passthru_command = "arv-get --no-progress ".escapeshellarg("$pdh/$subdir$regs[3]");
-        $fsize = $regs[2];
-        $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $regs[2]);
-      }
 
+      # Strip hints (e.g. +k@ant) if there are any
+      preg_match('/^([\da-f]{32}(\+\d+))/', $pdh, $m2);
+      $clean_pdh = $m2[0];
+
+      $pieces = explode(" - ", $_REQUEST['download_nickname']);
+      if (sizeof($pieces) > 1) {
+        # A file name was provided. Extract it and DTRT.
+        $fn = array_pop($pieces);
+
+        # Just naively add the requested filename to the manifest hash
+        $locator = $clean_pdh . '/' . $fn;
+        $loc_esc = escapeshellarg($locator);
+
+        $fsize = arv_keep_size($locator);
+        $fn = basename($locator);
+        $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $fn);
+        if ($fsize != -1) {
+          $passthru_command = "arv-get --no-progress ".escapeshellarg($locator);
+        }
+      } else {
+        # old-style locator, no file name. Assume first (and only) file is the one we want.
+        #
+
+        $manifest = trim(`HOME=/home/trait arv-get --no-progress ''$pdh_esc`);
+        if (preg_match('/^(\.[^\s]*) .* 0:(\d+):(\S+)$/', $manifest, $regs)) {
+          //$passthru_command = "whget ".escapeshellarg("$locator/**/$regs[2]");
+          $subdir = preg_replace( '/^\.\/?/', '', $regs[1] );
+          if ( $subdir != "" ) { $subdir = $subdir . "/"; }
+          $passthru_command = "arv-get --no-progress ".escapeshellarg("$pdh/$subdir$regs[3]");
+          $fsize = $regs[2];
+          $ext = preg_replace ('/^.*?((\.\w{3})?(\.[bg]z2?)?)$/', '\1', $regs[2]);
+        }
+      }
     } elseif (preg_match('/^([\da-f]{32}(\+\d+)?)\/(.*)/', $locator, $m)) {
 
       # new-style locator.  We need to do some actual processing of the manifest
