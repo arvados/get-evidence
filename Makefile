@@ -83,7 +83,7 @@ latest_flat:
 latest_flat.gz: latest_flat
 	@gzip -9n <public_html/latest-flat.tsv >public_html/latest-flat.tsv.gz
 latest_locator: public_html/getev-latest.json.gz
-	@HOME=/home/trait /usr/local/bin/arv-put --no-progress --portable-data-hash public_html/getev-latest.json.gz >public_html/getev-latest.locator.tmp 2> /dev/null
+	@HOME=/home/trait /usr/bin/arv-put --no-progress --portable-data-hash public_html/getev-latest.json.gz >public_html/getev-latest.locator.tmp 2> /dev/null
 	@mv public_html/getev-latest.locator.tmp public_html/getev-latest.locator
 	@jq '.["getev-latest"]="'`cat public_html/getev-latest.locator`'/getev-latest.json.gz"' /home/trait/.config/arvados/config.json > /home/trait/.config/arvados/config.json.tmp
 	@mv /home/trait/.config/arvados/config.json.tmp /home/trait/.config/arvados/config.json
